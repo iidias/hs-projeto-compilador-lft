@@ -1,0 +1,1 @@
+# hs-projeto-compilador-lft
