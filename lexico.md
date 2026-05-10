@@ -105,6 +105,26 @@ Os operadores definem as operações que podem ser realizadas sobre valores e ex
 | `=`      | Definição de função/variável                   | —           | —                     |
 | `\`      | Introdução de expressão lambda (*backslash*)   | —           | —                     |
 
+Exemplos de uso de cada operador funcional:
+
+```haskell
+-- (::) anotação de tipo: informa ao compilador o tipo esperado
+soma :: Int -> Int -> Int
+
+-- (->) seta de tipo: separa tipos de entrada e saída em assinaturas e lambdas
+multiplicar :: Int -> Int -> Int   -- dois Ints de entrada, um Int de saída
+
+-- (\) lambda: define uma função anônima sem precisar nomeá-la
+dobrar = \x -> x * 2              -- equivale a: dobrar x = x * 2
+
+-- (.) composição: encadeia funções da direita para a esquerda
+dobrarEAbs = abs . (*2)           -- aplica (*2) primeiro, depois abs
+
+-- ($) aplicação: evita parênteses, tudo à direita é avaliado antes
+resultado = dobrar $ 3 + 2        -- equivale a: dobrar (3 + 2) = 10
+-- sem ($) seria necessário: dobrar (3 + 2)
+```
+
 ### 3.6 Tabela Consolidada de Precedência
 
 | Precedência | Associatividade       | Operadores                            |
@@ -289,6 +309,34 @@ Espaços em branco (` `), tabulações (`\t`) e quebras de linha (`\n`) são **i
 
 1. **Separadores de tokens:** `let x=1` e `let x = 1` produzem a mesma sequência de tokens.
 2. **Indentação (regra do *offside*):** A posição da coluna do primeiro token de cada linha é usada para inferir a estrutura de blocos. O analisador léxico mantém uma pilha de níveis de indentação e emite tokens virtuais `{`, `}` e `;` conforme necessário. A variável `lineno` rastreia a linha corrente para mensagens de erro.
+
+### Regra do *Offside* — Como Funciona
+
+Quando o léxico encontra as palavras-chave `where`, `let`, `do` ou `of`, ele registra a coluna do **próximo token** como o nível de indentação do bloco. A partir daí:
+
+- Uma linha que começa na **mesma coluna** → novo item do bloco (token virtual `;`)
+- Uma linha que começa **mais à direita** → continuação do item atual
+- Uma linha que começa **mais à esquerda** → fim do bloco (token virtual `}`)
+
+```haskell
+-- ✅ Indentação VÁLIDA: x, y e z estão alinhados na mesma coluna,
+--    sendo interpretados como três definições separadas do where.
+hipotenusa a b = raiz
+    where
+        raiz  = sqrt soma  -- coluna 9 → abre o bloco
+        soma  = a^2 + b^2  -- coluna 9 → mesmo nível, novo item (`;` virtual)
+        msg   = "ok"       -- coluna 9 → mesmo nível, novo item (`;` virtual)
+--  ↑ fim do where pois a próxima linha voltará à coluna 1 (`}` virtual)
+
+-- ❌ Indentação INVÁLIDA: y está menos indentado que x,
+--    fazendo o léxico fechar o bloco do where prematuramente.
+hipotenusa a b = raiz
+    where
+        raiz = sqrt soma   -- coluna 9 → abre o bloco
+      soma = a^2 + b^2     -- coluna 7 → ERRO: fecha o bloco antes de soma ser definida
+```
+
+> **Importante:** misturar espaços e tabulações para indentação pode causar erros difíceis de diagnosticar. O subconjunto adota a convenção de usar **apenas espaços**.
 
 ---
 
