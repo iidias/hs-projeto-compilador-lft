@@ -6,8 +6,6 @@ Este documento descreve os elementos léxicos do subconjunto da linguagem **Hask
 
 Haskell é uma linguagem puramente funcional, de tipagem estática e forte, com avaliação preguiçosa (*lazy evaluation*). Para viabilizar a implementação de um compilador completo dentro do escopo da disciplina, foi definido um subconjunto da linguagem original que preserva suas principais características: funções puras, imutabilidade por padrão, casamento de padrões e expressões *let/where*.
 
-A análise léxica é a primeira etapa do processo de compilação e tem como objetivo transformar o código-fonte em uma sequência de *tokens*, que serão consumidos pelas fases subsequentes do compilador.
-
 > **Nota sobre layout (regra do *offside*):** Haskell utiliza indentação para delimitar blocos, dispensando chaves e ponto e vírgula na maioria dos contextos. O analisador léxico é responsável por rastrear os níveis de indentação e emitir os tokens virtuais `{`, `}` e `;` conforme a regra do *offside*, compatível com o padrão Haskell 2010.
 
 ---
