@@ -9,7 +9,6 @@ Os tokens em maiúsculo reconhecidos pelo léxico são:
 | `LOWER_ID` | Identificador iniciado com letra minúscula ou `_` |
 | `UPPER_ID` | Identificador iniciado com letra maiúscula  |
 | `INT`      | Literal inteiro                            |
-| `FLOAT`    | Literal de ponto flutuante                 |
 | `CHAR`     | Literal de caractere (`'a'`)               |
 | `STRING`   | Literal de string (`"texto"`)              |
 
@@ -44,7 +43,6 @@ typeexprlist → typeexpr
              | typeexpr "," typeexprlist
 
 typeatom → "Int"
-         | "Float"
          | "Bool"
          | "Char"
          | "String"
@@ -208,7 +206,6 @@ appexpr → appexpr atomexpr
 atomexpr → LOWER_ID
           | UPPER_ID
           | INT
-          | FLOAT
           | CHAR
           | STRING
           | "True"
