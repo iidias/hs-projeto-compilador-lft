@@ -11,7 +11,7 @@ As regras abaixo utilizam a notação **BNF estendida** (EBNF):
 - `→` separa o símbolo não-terminal de suas produções
 - `|` indica alternativas de produção
 - Símbolos em `"aspas"` representam terminais literais
-- Símbolos em `MAIÚSCULAS` representam tokens léxicos (e.g., `ID`, `INT`, `FLOAT`)
+- Símbolos em `MAIÚSCULAS` representam tokens léxicos (e.g., `ID`, `INT`)
 - Símbolos em `minúsculas` representam não-terminais
 - `[ x ]` indica que `x` é opcional (zero ou uma ocorrência)
 - `{ x }` indica que `x` pode se repetir (zero ou mais ocorrências)
@@ -67,7 +67,6 @@ type_expr
 
 type_atom
     → "Int"
-    | "Float"
     | "Bool"
     | "Char"
     | "String"
@@ -258,7 +257,6 @@ atom_expr
     → LOWER_ID
     | UPPER_ID
     | INT
-    | FLOAT
     | CHAR
     | STRING
     | "True"
