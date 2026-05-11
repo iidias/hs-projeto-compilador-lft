@@ -57,7 +57,7 @@ python src/main.py <arquivo.hs>
 
 * Guilhereme Seixas ([@guilheeme1108-prog](https://github.com/guilheeme1108-prog/))
 * Igor Dias ([@iidias](https://github.com/iidias/))
-* Igor Lemos
+* Igor Lemos ([@IgorLemos01](https://github.com/IgorLemos01))
 * Yasmim Passos ([@yasmim-passos](https://github.com/yasmim-passos/))
   
 ---
