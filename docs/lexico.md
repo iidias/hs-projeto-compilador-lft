@@ -346,7 +346,6 @@ hipotenusa a b = raiz
 | Identificadores var.  | `x`, `minhaFuncao`, `somaLista'`, `_aux`      |
 | Identificadores tipo  | `Int`, `Bool`, `MeuTipo`                      |
 | Inteiros              | `0`, `42`, `1000`                             |
-| Ponto flutuante       | `3.14`, `1.5e10`                              |
 | Caracteres            | `'a'`, `'\n'`                                 |
 | Strings               | `"Olá"`, `""`                                 |
 | Comentários           | `-- ...`, `{- ... -}`                         |
