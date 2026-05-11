@@ -235,33 +235,3 @@ quallist → qual
 qual → LOWER_ID "<-" expr
       | expr
 ```
-
----
-
-## Exemplo de Programa
-
-```haskell
-data Forma = Circulo Float
-           | Retangulo Float Float
-
-calcArea :: Forma -> Float
-calcArea forma = case forma of
-    Circulo r     -> 3.14 * r ^ 2
-    Retangulo l a -> l * a
-
-fatorial :: Int -> Int
-fatorial 0 = 1
-fatorial n = n * fatorial (n - 1)
-
-classificar :: Int -> String
-classificar n
-    | n < 0     = "negativo"
-    | n == 0    = "zero"
-    | otherwise = "positivo"
-
-main :: IO ()
-main = do
-    let area = calcArea (Circulo 5.0)
-    let fat  = fatorial 6
-    return ()
-```
