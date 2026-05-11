@@ -204,7 +204,7 @@ ListaVazia
 
 ## 6. Literais Numéricos
 
-O subconjunto suporta literais numéricos inteiros e de ponto flutuante.
+O subconjunto suporta literais numéricos inteiros e de ponto flutuante, entretanto esse último não será utilzado agora.
 
 ### 6.1 Inteiros
 
@@ -212,14 +212,6 @@ Sequência de um ou mais dígitos decimais (0–9), sem separadores.
 
 ```
 0   42   1000   99
-```
-
-### 6.2 Ponto Flutuante
-
-Parte inteira seguida de ponto decimal (`.`) e parte fracionária, ambas obrigatórias. Suporta opcionalmente a notação científica com `e` ou `E`.
-
-```
-3.14    0.5    2.0    1.5e10    6.022e23    1.0e-3
 ```
 
 > **Nota:** Números negativos **não são literais** em Haskell; são a aplicação do operador de negação unária (`negate`) a um literal positivo. Portanto, `-5` é tokenizado como dois tokens: `-` e `5`.
