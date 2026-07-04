@@ -311,7 +311,7 @@ Quando o léxico encontra as palavras-chave `where`, `let`, `do` ou `of`, ele re
 - Uma linha que começa **mais à esquerda** → fim do bloco (token virtual `}`)
 
 ```haskell
--- ✅ Indentação VÁLIDA: x, y e z estão alinhados na mesma coluna,
+-- Indentação VÁLIDA: x, y e z estão alinhados na mesma coluna,
 --    sendo interpretados como três definições separadas do where.
 hipotenusa a b = raiz
     where
@@ -320,7 +320,7 @@ hipotenusa a b = raiz
         msg   = "ok"       -- coluna 9 → mesmo nível, novo item (`;` virtual)
 --  ↑ fim do where pois a próxima linha voltará à coluna 1 (`}` virtual)
 
--- ❌ Indentação INVÁLIDA: y está menos indentado que x,
+-- Indentação INVÁLIDA: y está menos indentado que x,
 --    fazendo o léxico fechar o bloco do where prematuramente.
 hipotenusa a b = raiz
     where
