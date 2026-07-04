@@ -1,16 +1,14 @@
 # GLC do Subconjunto Haskell
 
-Terminais são representados pelos elementos cuja grafia está em maiúsculo, bem como pelos símbolos que estão entre aspas duplas (").
+Terminais são representados pelos elementos cuja grafia está em maiúsculo, bem como pelos símbolos entre aspas duplas (").
 
-Os tokens em maiúsculo reconhecidos pelo léxico são:
+Os tokens virtuais `VOPEN`, `VSEMI` e `VCLOSE` são emitidos automaticamente pela FSM + Pilha do analisador léxico com base na indentação do código-fonte (regra do *offside*). Eles substituem os delimitadores explícitos `{`, `;` e `}` que seriam necessários em linguagens como C.
 
-| Token      | Descrição                                  |
-|:----------:|:-------------------------------------------|
-| `LOWER_ID` | Identificador iniciado com letra minúscula ou `_` |
-| `UPPER_ID` | Identificador iniciado com letra maiúscula  |
-| `INT`      | Literal inteiro                            |
-| `CHAR`     | Literal de caractere (`'a'`)               |
-| `STRING`   | Literal de string (`"texto"`)              |
+| Token virtual | Equivale a | Quando é emitido |
+|:---:|:---:|:---|
+| `VOPEN` | `{` | Após `where`, `let`, `do`, `of`, ao abrir um novo nível de indentação |
+| `VSEMI` | `;` | Quando uma linha começa no mesmo nível de indentação do bloco atual |
+| `VCLOSE` | `}` | Quando uma linha começa em nível inferior ao do bloco atual |
 
 ---
 
@@ -18,12 +16,18 @@ Os tokens em maiúsculo reconhecidos pelo léxico são:
 
 ```
 program → topdecl
-        | topdecl program
+        | program VSEMI topdecl
+        | program VSEMI
+```
 
+---
+
+## Declarações de Alto Nível
+
+```
 topdecl → typesig
         | funcdecl
         | datadecl
-        | typealias
 ```
 
 ---
@@ -33,42 +37,31 @@ topdecl → typesig
 ```
 typesig → LOWER_ID "::" typeexpr
 
-typeexpr → typeatom
-         | typeatom "->" typeexpr
-         | "[" typeexpr "]"
-         | "(" typeexprlist ")"
-         | "(" ")"
+typeexpr → typeterm
+         | typeterm "->" typeexpr
 
-typeexprlist → typeexpr
-             | typeexpr "," typeexprlist
-
-typeatom → "Int"
-         | "Bool"
-         | "Char"
-         | "String"
-         | "IO" typeatom
-         | "(" ")"
-         | UPPER_ID
+typeterm → UPPER_ID
          | LOWER_ID
+         | "(" typeexpr ")"
+         | "(" ")"
+         | "[" typeexpr "]"
 ```
 
 ---
 
-## Declarações de Tipo Algébrico e Sinônimo
+## Declarações de Tipo Algébrico
 
 ```
 datadecl → "data" UPPER_ID "=" constructorlist
 
 constructorlist → constructor
-                | constructor "|" constructorlist
+                | constructorlist "|" constructor
 
 constructor → UPPER_ID
             | UPPER_ID typeatoms
 
-typeatoms → typeatom
-          | typeatom typeatoms
-
-typealias → "type" UPPER_ID "=" typeexpr
+typeatoms → UPPER_ID
+           | typeatoms UPPER_ID
 ```
 
 ---
@@ -76,25 +69,32 @@ typealias → "type" UPPER_ID "=" typeexpr
 ## Definições de Função
 
 ```
-funcdecl → LOWER_ID patternlist "=" expr
-          | LOWER_ID patternlist "=" expr whereclause
-          | LOWER_ID patternlist guards
-          | LOWER_ID patternlist guards whereclause
-          | LOWER_ID "=" expr
-          | LOWER_ID "=" expr whereclause
+funcdecl → LOWER_ID "=" expr
+          | LOWER_ID simplepats "=" expr
+          | LOWER_ID "=" expr "where" VOPEN localdecls VCLOSE
+          | LOWER_ID simplepats "=" expr "where" VOPEN localdecls VCLOSE
+          | LOWER_ID guards
+          | LOWER_ID simplepats guards
 
-patternlist → pattern
-            | pattern patternlist
+simplepats → simplepat
+           | simplepats simplepat
+
+simplepat → LOWER_ID
+          | "_"
+          | INT
+          | TRUE
+          | FALSE
+          | CHAR
+          | UPPER_ID
+          | "(" pattern ")"
 
 guards → guard
-       | guard guards
+       | guards guard
 
 guard → "|" expr "=" expr
 
-whereclause → "where" localdecls
-
 localdecls → localdecl
-           | localdecl localdecls
+           | localdecls VSEMI localdecl
 
 localdecl → funcdecl
            | typesig
@@ -105,130 +105,168 @@ localdecl → funcdecl
 ## Padrões
 
 ```
-pattern → "_"
-        | LOWER_ID
+pattern → LOWER_ID
+        | "_"
         | UPPER_ID
-        | UPPER_ID patternlist
         | INT
-        | FLOAT
+        | TRUE
+        | FALSE
         | CHAR
-        | "True"
-        | "False"
         | "(" pattern ")"
-        | "(" pattern "," patterntuplelist ")"
+        | "(" pattern "," patterntuple ")"
         | "[" "]"
-        | "[" patterncommalist "]"
+        | "[" patternlist "]"
         | pattern ":" pattern
-        | LOWER_ID "@" pattern
 
-patterntuplelist → pattern
-                 | pattern "," patterntuplelist
+patterntuple → pattern
+             | patterntuple "," pattern
 
-patterncommalist → pattern
-                 | pattern "," patterncommalist
+patternlist → pattern
+            | patternlist "," pattern
 ```
 
 ---
 
 ## Expressões
 
+A ambiguidade dos operadores infixos é resolvida pela tabela de precedência do PLY, não por estratificação da gramática.
+
 ```
-expr → lambdaexpr
-     | letexpr
+expr → expr "+" expr
+     | expr "-" expr
+     | expr "*" expr
+     | expr "/" expr
+     | expr "^" expr
+     | expr "div" expr
+     | expr "mod" expr
+     | expr "++" expr
+     | expr ":" expr
+     | expr "==" expr
+     | expr "/=" expr
+     | expr "<" expr
+     | expr ">" expr
+     | expr "<=" expr
+     | expr ">=" expr
+     | expr "&&" expr
+     | expr "||" expr
+     | expr "." expr
+     | expr "$" expr
+     | "-" expr
+     | "not" expr
      | ifexpr
      | caseexpr
+     | letexpr
      | doexpr
-     | infixexpr
+     | lambdaexpr
+     | appexpr
 
-lambdaexpr → "\" patternlist "->" expr
+appexpr → appexpr atom
+        | atom
 
-letexpr → "let" localdecls "in" expr
+atom → LOWER_ID
+     | UPPER_ID
+     | INT
+     | TRUE
+     | FALSE
+     | CHAR
+     | STRING
+     | "return"
+     | "(" expr ")"
+     | "(" expr "," exprtuple ")"
+     | "[" "]"
+     | "[" exprlist "]"
+     | "[" expr ".." "]"
+     | "[" expr ".." expr "]"
 
-ifexpr → "if" expr "then" expr "else" expr
-
-caseexpr → "case" expr "of" casealts
-
-casealts → casealt
-          | casealt casealts
-
-casealt → pattern "->" expr
-         | pattern "->" expr whereclause
-
-doexpr → "do" dostmts
-
-dostmts → dostmt
-         | dostmt dostmts
-
-dostmt → LOWER_ID "<-" expr
-        | "let" localdecls
-        | expr
-```
-
----
-
-## Expressões Infixas
-
-```
-infixexpr → infixexpr "+"   infixexpr
-          | infixexpr "-"   infixexpr
-          | infixexpr "*"   infixexpr
-          | infixexpr "/"   infixexpr
-          | infixexpr "^"   infixexpr
-          | infixexpr "div" infixexpr
-          | infixexpr "mod" infixexpr
-          | infixexpr "++"  infixexpr
-          | infixexpr ":"   infixexpr
-          | infixexpr "=="  infixexpr
-          | infixexpr "/="  infixexpr
-          | infixexpr "<"   infixexpr
-          | infixexpr ">"   infixexpr
-          | infixexpr "<="  infixexpr
-          | infixexpr ">="  infixexpr
-          | infixexpr "&&"  infixexpr
-          | infixexpr "||"  infixexpr
-          | infixexpr "."   infixexpr
-          | infixexpr "$"   infixexpr
-          | unaryexpr
-
-unaryexpr → "-" appexpr
-           | "not" appexpr
-           | appexpr
-
-appexpr → appexpr atomexpr
-         | atomexpr
-```
-
----
-
-## Expressões Atômicas
-
-```
-atomexpr → LOWER_ID
-          | UPPER_ID
-          | INT
-          | CHAR
-          | STRING
-          | "True"
-          | "False"
-          | "(" expr ")"
-          | "(" expr "," exprtuplelist ")"
-          | "[" "]"
-          | "[" exprlist "]"
-          | "[" expr ".." "]"
-          | "[" expr ".." expr "]"
-          | "[" expr "," expr ".." "]"
-          | "[" expr "," expr ".." expr "]"
-          | "[" expr "|" quallist "]"
-
-exprtuplelist → expr
-              | expr "," exprtuplelist
+exprtuple → expr
+          | exprtuple "," expr
 
 exprlist → expr
-          | expr "," exprlist
+         | exprlist "," expr
+```
 
-quallist → qual
-          | qual "," quallist
+---
 
-qual → LOWER_ID "<-" expr
-      | expr
+## Estruturas de Controle
+
+```
+ifexpr → "if" expr "then" expr "else" expr
+
+caseexpr → "case" expr "of" VOPEN casealts VCLOSE
+
+casealts → casealt
+         | casealts VSEMI casealt
+
+casealt → pattern "->" expr
+```
+
+---
+
+## Let-in e Do
+
+```
+letexpr → "let" VOPEN localdecls VCLOSE "in" expr
+
+doexpr → "do" VOPEN dostmts VCLOSE
+
+dostmts → dostmt
+        | dostmts VSEMI dostmt
+
+dostmt → LOWER_ID "<-" expr
+       | "let" VOPEN localdecls VCLOSE
+       | expr
+```
+
+---
+
+## Lambda
+
+```
+lambdaexpr → "\" simplepats "->" expr
+```
+
+---
+
+## Tabela de Precedência
+
+| Nível | Associatividade | Operadores |
+|:---:|:---:|:---|
+| 0 (menor) | Direita | `$` |
+| 1 | Direita | `\|\|` |
+| 2 | Direita | `&&` |
+| 3 | Sem assoc. | `==` `/=` `<` `>` `<=` `>=` |
+| 4 | Direita | `:` `++` |
+| 5 | Esquerda | `+` `-` |
+| 6 | Esquerda | `*` `/` `div` `mod` |
+| 7 | Direita | `^` |
+| 8 | Direita | `.` |
+| 9 | Direita | `-` unário, `not` |
+| 10 (maior) | Esquerda | Aplicação de função |
+
+---
+
+## Exemplo de Programa
+
+```haskell
+data Forma = Circulo Int
+           | Retangulo Int Int
+
+area :: Forma -> Int
+area f = case f of
+    Circulo r      -> r * r
+    Retangulo l a  -> l * a
+
+classificar :: Int -> String
+classificar n
+    | n < 0     = "negativo"
+    | n == 0    = "zero"
+    | otherwise = "positivo"
+
+dobrar :: Int -> Int
+dobrar = \x -> x + x
+
+main :: IO ()
+main = do
+    let r = area (Circulo 5)
+    return r
 ```
