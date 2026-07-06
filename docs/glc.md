@@ -265,7 +265,6 @@ classificar n
 dobrar :: Int -> Int
 dobrar = \x -> x + x
 
-main :: IO ()
 main = do
     let r = area (Circulo 5)
     return r
