@@ -1,8 +1,5 @@
 # λ Compilador Haskell — Linguagens Formais e Tradutores
 
-> Projeto acadêmico desenvolvido na disciplina de **Linguagens Formais e Tradutores**  
-> Curso de Sistemas de Informação — Universidade Federal de Sergipe (UFS)
-
 ---
 
 ## 📋 Sobre o Projeto
