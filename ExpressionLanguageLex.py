@@ -50,6 +50,8 @@ tokens = [
 ] + list(reservadas.values())
 
 # OPERADORES E DELIMITADORES (regras de string)
+# O PLY ordena automaticamente por tamanho do padrão (maior primeiro),
+# garantindo que '==' seja reconhecido antes de '=', '::' antes de ':', etc.
 t_CONCATENA  = r'\+\+'
 t_SOMA    = r'\+'
 t_SETA   = r'->'
@@ -85,8 +87,10 @@ t_BARRA_VERT    = r'\|'
 t_ARROBA      = r'@'
 
 # IDENTIFICADORES
-#   minúsculo / _ - variáveis e funções  (ID_MIN)
-#   maiúsculo - tipos e construtores (ID_MAI)
+# Haskell distingue pelo primeiro caractere:
+#   minúsculo / _ → variáveis e funções  (ID_MIN)
+#   maiúsculo     → tipos e construtores (ID_MAI)
+# Ambas as funções consultam o dicionário 'reservadas'
 def t_ID_MIN(t):
    r"[a-z_][a-zA-Z_0-9']*"
    if t.value == '_':
@@ -116,7 +120,7 @@ def t_STRING(t):
    t.value = t.value[1:-1]   # remove as aspas duplas
    return t
 
-# COMENTÁRIOS
+# COMENTÁRIOS (descartados, não viram tokens)
 def t_COMENTARIO_LINHA(t):
    r'--[^\n]*'
    pass
@@ -142,7 +146,7 @@ t_ignore = ' \t'
 
 # ERRO LÉXICO
 def t_error(t):
-   print("Erro léxico: caractere inválido '%s' na linha %d" % (t.value[0], t.lexer.lineno))
+   print("Erro léxico na linha %d: caractere inválido '%s'" % (t.lexer.lineno, t.value[0]))
    t.lexer.skip(1)
 
 # FSM + PILHA DE INDENTAÇÃO
@@ -202,20 +206,20 @@ class HaskellLexer:
          # empilha o novo nível e abre o bloco
          self._estado = ESTADO_NORMAL
          self._pilha.append(col)
-         self._buffer.append(self._token_virtual('VABRE', '{', lineno))
+         self._buffer.append(self._token_virtual('VABRE', 'início de bloco', lineno))
 
       elif col == self._pilha[-1]:
          # Mesmo nível de indentação → separa dois itens do bloco
          # Ignora VSEP duplicado (linhas em branco geram múltiplos NEWLINEs)
          if self._last_type != 'VSEP':
-            self._buffer.append(self._token_virtual('VSEP', ';', lineno))
+            self._buffer.append(self._token_virtual('VSEP', 'nova declaração no bloco', lineno))
 
       elif col < self._pilha[-1]:
          # Menos indentado → fecha bloco(s) até atingir o nível correspondente
          while len(self._pilha) > 1 and col < self._pilha[-1]:
             self._pilha.pop()
-            self._buffer.append(self._token_virtual('VFECHA', '}', lineno))
-         self._buffer.append(self._token_virtual('VSEP', ';', lineno))
+            self._buffer.append(self._token_virtual('VFECHA', 'fim de bloco', lineno))
+         self._buffer.append(self._token_virtual('VSEP', 'nova declaração no bloco', lineno))
 
       # col > self._pilha[-1]: continuação de linha → nenhum token emitido
 
@@ -223,7 +227,7 @@ class HaskellLexer:
       """Fecha todos os blocos abertos ao atingir o fim do arquivo."""
       while len(self._pilha) > 1:
          self._pilha.pop()
-         self._buffer.append(self._token_virtual('VFECHA', '}', lineno))
+         self._buffer.append(self._token_virtual('VFECHA', 'fim de bloco', lineno))
 
    # Interface pública usada pelo parser PLY:
    #   parser = yacc.yacc()
@@ -261,7 +265,7 @@ class HaskellLexer:
             col = tok.lexpos - self._lexer.line_start
             self._estado = ESTADO_NORMAL
             self._pilha.append(col)
-            self._buffer.append(self._token_virtual('VABRE', '{', tok.lineno))
+            self._buffer.append(self._token_virtual('VABRE', 'início de bloco', tok.lineno))
             self._buffer.append(tok)
             continue   # drena o buffer: VABRE primeiro, depois o token real
 
@@ -273,6 +277,7 @@ class HaskellLexer:
          return tok
 
 
+# MAIN
 def main():
    f     = open("input1.hs", "r")
    lexer = HaskellLexer()

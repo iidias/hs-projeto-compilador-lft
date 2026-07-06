@@ -18,7 +18,6 @@ precedence = (
 )
 
 # PROGRAMA
-
 def p_program1(p):
     '''program : topdecl'''
     p[0] = sa.SingleDecl(p[1])
@@ -32,7 +31,6 @@ def p_program_trailing(p):
     p[0] = p[1]
 
 # DECLARAÇÕES DE ALTO NÍVEL
-
 def p_topdecl_typesig(p):
     '''topdecl : typesig'''
     p[0] = p[1]
@@ -46,7 +44,6 @@ def p_topdecl_datadecl(p):
     p[0] = p[1]
 
 # ASSINATURAS DE TIPO
-
 def p_typesig(p):
     '''typesig : ID_MIN ANOTACAO typeexpr'''
     p[0] = sa.TypeSig(p[1], p[3])
@@ -79,8 +76,11 @@ def p_typeterm_list(p):
     '''typeterm : LCOLCH typeexpr RCOLCH'''
     p[0] = sa.ListType(p[2])
 
-# DECLARAÇÕES DE TIPO ALGÉBRICO
+def p_typeterm_app(p):
+    '''typeterm : ID_MAI typeterm'''
+    p[0] = sa.SimpleType(p[1] + ' ' + str(p[2]))
 
+# DECLARAÇÕES DE TIPO ALGÉBRICO
 def p_datadecl(p):
     '''datadecl : DATA ID_MAI IGUAL constructorlist'''
     p[0] = sa.DataDecl(p[2], p[4])
@@ -110,7 +110,6 @@ def p_typeatoms2(p):
     p[0] = p[1] + [p[2]]
 
 # DEFINIÇÕES DE FUNÇÃO
-
 def p_funcdecl1(p):
     '''funcdecl : ID_MIN IGUAL expr'''
     p[0] = sa.FuncDecl(p[1], [], p[3])
@@ -138,7 +137,6 @@ def p_funcdecl6(p):
 # PADRÕES SIMPLES (argumentos de função e lambda)
 # Construtores com argumentos devem ser envolvidos em parênteses:
 #   f (Circulo r) = ...   em vez de   f Circulo r = ...
-
 def p_simplepats1(p):
     '''simplepats : simplepat'''
     p[0] = [p[1]]
@@ -180,7 +178,6 @@ def p_simplepat_paren(p):
     p[0] = p[2]
 
 # GUARDAS
-
 def p_guards1(p):
     '''guards : guard'''
     p[0] = sa.SingleGuards(p[1])
@@ -194,7 +191,6 @@ def p_guard(p):
     p[0] = sa.Guard(p[2], p[4])
 
 # DECLARAÇÕES LOCAIS (where / let)
-
 def p_localdecls1(p):
     '''localdecls : localdecl'''
     p[0] = sa.SingleLocaldecl(p[1])
@@ -212,7 +208,6 @@ def p_localdecl_type(p):
     p[0] = p[1]
 
 # PADRÕES COMPLETOS (case-of)
-
 def p_pattern_lower(p):
     '''pattern : ID_MIN'''
     p[0] = sa.VarPat(p[1])
@@ -278,7 +273,6 @@ def p_patternlist2(p):
     p[0] = p[1] + [p[3]]
 
 # EXPRESSÕES (ambiguidade resolvida pela tabela de precedência)
-
 def p_expr_soma(p):
     '''expr : expr SOMA expr'''
     p[0] = sa.InfixExp('+', p[1], p[3])
@@ -388,7 +382,6 @@ def p_expr_app(p):
     p[0] = p[1]
 
 # APLICAÇÃO DE FUNÇÃO (justaposição, maior precedência binária)
-
 def p_appexpr_app(p):
     '''appexpr : appexpr atom %prec APLIC'''
     p[0] = sa.AppExp(p[1], p[2])
@@ -455,13 +448,11 @@ def p_atom_range(p):
     p[0] = sa.RangeExp(p[2], p[4])
 
 # IF-THEN-ELSE
-
 def p_ifexpr(p):
     '''ifexpr : IF expr THEN expr ELSE expr'''
     p[0] = sa.IfExp(p[2], p[4], p[6])
 
 # CASE-OF
-
 def p_caseexpr(p):
     '''caseexpr : CASE expr OF VABRE casealts VFECHA'''
     p[0] = sa.CaseExp(p[2], p[5])
@@ -479,13 +470,11 @@ def p_casealt(p):
     p[0] = sa.CaseAlt(p[1], p[3])
 
 # LET-IN
-
 def p_letexpr(p):
     '''letexpr : LET VABRE localdecls VFECHA IN expr'''
     p[0] = sa.LetExp(p[3], p[6])
 
 # DO
-
 def p_doexpr(p):
     '''doexpr : DO VABRE dostmts VFECHA'''
     p[0] = sa.DoExp(p[3])
@@ -511,13 +500,11 @@ def p_dostmt_expr(p):
     p[0] = sa.ExprDoStmt(p[1])
 
 # LAMBDA
-
 def p_lambdaexpr(p):
     '''lambdaexpr : LAMBDA simplepats SETA expr'''
     p[0] = sa.LambdaExp(p[2], p[4])
 
 # LISTAS AUXILIARES
-
 def p_exprtuple1(p):
     '''exprtuple : expr'''
     p[0] = [p[1]]
@@ -535,15 +522,19 @@ def p_exprlist2(p):
     p[0] = p[1] + [p[3]]
 
 # ERRO SINTÁTICO
-
 def p_error(p):
     if p:
-        print("Erro sintático: token inesperado '%s' na linha %d" % (p.value, p.lineno))
+        descricoes = {
+            'VABRE'  : 'inicio de bloco indentado',
+            'VFECHA' : 'fim de bloco indentado',
+            'VSEP'   : 'nova linha no mesmo nivel de indentacao',
+        }
+        descricao = descricoes.get(p.type, "'%s'" % p.value)
+        print("Erro sintatico na linha %d: %s inesperado" % (p.lineno, descricao))
     else:
-        print("Erro sintático: fim de arquivo inesperado")
+        print("Erro sintatico: fim de arquivo inesperado — verifique se todos os blocos estao corretamente indentados")
 
 # MAIN
-
 def main():
     f = open("input1.hs", "r")
     data = f.read()
