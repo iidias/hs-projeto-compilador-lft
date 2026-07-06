@@ -1,4 +1,4 @@
-# λ Compilador Haskell — Linguagens Formais e Tradutores
+# λ Compilador Haskell - Linguagens Formais e Tradutores
 
 ---
 
