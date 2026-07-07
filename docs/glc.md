@@ -2,13 +2,13 @@
 
 Terminais são representados pelos elementos cuja grafia está em maiúsculo, bem como pelos símbolos entre aspas duplas (").
 
-Os tokens virtuais `VOPEN`, `VSEMI` e `VCLOSE` são emitidos automaticamente pela FSM + Pilha do analisador léxico com base na indentação do código-fonte (regra do *offside*). Eles substituem os delimitadores explícitos `{`, `;` e `}` que seriam necessários em linguagens como C.
+Os tokens virtuais `VABRE`, `VSEP` e `VFECHA` são emitidos automaticamente pela FSM + Pilha do analisador léxico com base na indentação do código-fonte (regra do *offside*). Eles substituem os delimitadores explícitos `{`, `;` e `}` que seriam necessários em linguagens como C.
 
 | Token virtual | Equivale a | Quando é emitido |
 |:---:|:---:|:---|
-| `VOPEN` | `{` | Após `where`, `let`, `do`, `of`, ao abrir um novo nível de indentação |
-| `VSEMI` | `;` | Quando uma linha começa no mesmo nível de indentação do bloco atual |
-| `VCLOSE` | `}` | Quando uma linha começa em nível inferior ao do bloco atual |
+| `VABRE` | `{` | Após `where`, `let`, `do`, `of`, ao abrir um novo nível de indentação |
+| `VSEP` | `;` | Quando uma linha começa no mesmo nível de indentação do bloco atual |
+| `VFECHA` | `}` | Quando uma linha começa em nível inferior ao do bloco atual |
 
 ---
 
@@ -16,8 +16,8 @@ Os tokens virtuais `VOPEN`, `VSEMI` e `VCLOSE` são emitidos automaticamente pel
 
 ```
 program → topdecl
-        | program VSEMI topdecl
-        | program VSEMI
+        | program VSEP topdecl
+        | program VSEP
 ```
 
 ---
@@ -35,13 +35,13 @@ topdecl → typesig
 ## Assinaturas de Tipo
 
 ```
-typesig → LOWER_ID "::" typeexpr
+typesig → ID_MIN "::" typeexpr
 
 typeexpr → typeterm
          | typeterm "->" typeexpr
 
-typeterm → UPPER_ID
-         | LOWER_ID
+typeterm → ID_MAI
+         | ID_MIN
          | "(" typeexpr ")"
          | "(" ")"
          | "[" typeexpr "]"
@@ -52,16 +52,16 @@ typeterm → UPPER_ID
 ## Declarações de Tipo Algébrico
 
 ```
-datadecl → "data" UPPER_ID "=" constructorlist
+datadecl → "data" ID_MAI "=" constructorlist
 
 constructorlist → constructor
                 | constructorlist "|" constructor
 
-constructor → UPPER_ID
-            | UPPER_ID typeatoms
+constructor → ID_MAI
+            | ID_MAI typeatoms
 
-typeatoms → UPPER_ID
-           | typeatoms UPPER_ID
+typeatoms → ID_MAI
+           | typeatoms ID_MAI
 ```
 
 ---
@@ -69,23 +69,23 @@ typeatoms → UPPER_ID
 ## Definições de Função
 
 ```
-funcdecl → LOWER_ID "=" expr
-          | LOWER_ID simplepats "=" expr
-          | LOWER_ID "=" expr "where" VOPEN localdecls VCLOSE
-          | LOWER_ID simplepats "=" expr "where" VOPEN localdecls VCLOSE
-          | LOWER_ID guards
-          | LOWER_ID simplepats guards
+funcdecl → ID_MIN "=" expr
+          | ID_MIN simplepats "=" expr
+          | ID_MIN "=" expr "where" VABRE localdecls VFECHA
+          | ID_MIN simplepats "=" expr "where" VABRE localdecls VFECHA
+          | ID_MIN guards
+          | ID_MIN simplepats guards
 
 simplepats → simplepat
            | simplepats simplepat
 
-simplepat → LOWER_ID
+simplepat → ID_MIN
           | "_"
           | INT
           | TRUE
           | FALSE
-          | CHAR
-          | UPPER_ID
+          | CARACTERE
+          | ID_MAI
           | "(" pattern ")"
 
 guards → guard
@@ -94,7 +94,7 @@ guards → guard
 guard → "|" expr "=" expr
 
 localdecls → localdecl
-           | localdecls VSEMI localdecl
+           | localdecls VSEP localdecl
 
 localdecl → funcdecl
            | typesig
@@ -105,13 +105,14 @@ localdecl → funcdecl
 ## Padrões
 
 ```
-pattern → LOWER_ID
+pattern → ID_MIN
         | "_"
-        | UPPER_ID
+        | ID_MAI
+        | ID_MAI simplepats
         | INT
         | TRUE
         | FALSE
-        | CHAR
+        | CARACTERE
         | "(" pattern ")"
         | "(" pattern "," patterntuple ")"
         | "[" "]"
@@ -163,14 +164,13 @@ expr → expr "+" expr
 appexpr → appexpr atom
         | atom
 
-atom → LOWER_ID
-     | UPPER_ID
+atom → ID_MIN
+     | ID_MAI
      | INT
      | TRUE
      | FALSE
-     | CHAR
+     | CARACTERE
      | STRING
-     | "return"
      | "(" expr ")"
      | "(" expr "," exprtuple ")"
      | "[" "]"
@@ -192,10 +192,10 @@ exprlist → expr
 ```
 ifexpr → "if" expr "then" expr "else" expr
 
-caseexpr → "case" expr "of" VOPEN casealts VCLOSE
+caseexpr → "case" expr "of" VABRE casealts VFECHA
 
 casealts → casealt
-         | casealts VSEMI casealt
+         | casealts VSEP casealt
 
 casealt → pattern "->" expr
 ```
@@ -205,15 +205,16 @@ casealt → pattern "->" expr
 ## Let-in e Do
 
 ```
-letexpr → "let" VOPEN localdecls VCLOSE "in" expr
+letexpr → "let" VABRE localdecls VFECHA "in" expr
 
-doexpr → "do" VOPEN dostmts VCLOSE
+doexpr → "do" VABRE dostmts VFECHA
 
 dostmts → dostmt
-        | dostmts VSEMI dostmt
+        | dostmts VSEP dostmt
 
-dostmt → LOWER_ID "<-" expr
-       | "let" VOPEN localdecls VCLOSE
+dostmt → ID_MIN "<-" expr
+       | "let" VABRE localdecls VFECHA
+       | "return" atom
        | expr
 ```
 

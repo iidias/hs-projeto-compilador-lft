@@ -52,44 +52,44 @@ tokens = [
 # OPERADORES E DELIMITADORES (regras de string)
 # O PLY ordena automaticamente por tamanho do padrão (maior primeiro),
 # garantindo que '==' seja reconhecido antes de '=', '::' antes de ':', etc.
-t_CONCATENA  = r'\+\+'
-t_SOMA    = r'\+'
-t_SETA   = r'->'
-t_SUB     = r'-'
-t_VEZES   = r'\*'
-t_POT     = r'\^'
-t_ANOTACAO  = r'::'
-t_CONS    = r':'
-t_PONTOPONTO  = r'\.\.'
+t_CONCATENA = r'\+\+'
+t_SOMA = r'\+'
+t_SETA = r'->'
+t_SUB = r'-'
+t_VEZES = r'\*'
+t_POT = r'\^'
+t_ANOTACAO = r'::'
+t_CONS = r':'
+t_PONTOPONTO = r'\.\.'
 t_COMPOSICAO = r'\.'
-t_DOLAR  = r'\$'
-t_LAMBDA  = r'\\'
-t_IGUALDADE      = r'=='
-t_DIFERENTE     = r'/='
-t_BARRA   = r'/'
-t_MENOR_EQ      = r'<='
-t_EXTRAI    = r'<-'
-t_MENOR      = r'<'
-t_MAIOR_EQ      = r'>='
-t_MAIOR      = r'>'
-t_E_LOG     = r'&&'
-t_OU_LOG      = r'\|\|'
-t_IGUAL   = r'='
-t_LPAREN  = r'\('
-t_RPAREN  = r'\)'
-t_LCOLCH  = r'\['
-t_RCOLCH  = r'\]'
-t_LCHAV   = r'\{'
-t_RCHAV   = r'\}'
+t_DOLAR = r'\$'
+t_LAMBDA = r'\\'
+t_IGUALDADE = r'=='
+t_DIFERENTE = r'/='
+t_BARRA = r'/'
+t_MENOR_EQ = r'<='
+t_EXTRAI = r'<-'
+t_MENOR = r'<'
+t_MAIOR_EQ = r'>='
+t_MAIOR = r'>'
+t_E_LOG = r'&&'
+t_OU_LOG = r'\|\|'
+t_IGUAL = r'='
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_LCOLCH = r'\['
+t_RCOLCH = r'\]'
+t_LCHAV = r'\{'
+t_RCHAV = r'\}'
 t_VIRGULA = r','
-t_PV      = r';'
-t_BARRA_VERT    = r'\|'
-t_ARROBA      = r'@'
+t_PV = r';'
+t_BARRA_VERT = r'\|'
+t_ARROBA = r'@'
 
 # IDENTIFICADORES
 # Haskell distingue pelo primeiro caractere:
-#   minúsculo / _ → variáveis e funções  (ID_MIN)
-#   maiúsculo     → tipos e construtores (ID_MAI)
+# minúsculo / _ → variáveis e funções  (ID_MIN)
+# maiúsculo     → tipos e construtores (ID_MAI)
 # Ambas as funções consultam o dicionário 'reservadas'
 def t_ID_MIN(t):
    r"[a-z_][a-zA-Z_0-9']*"
@@ -180,21 +180,21 @@ BLOCK_OPENERS = {'WHERE', 'LET', 'DO', 'OF'}
 class HaskellLexer:
 
    def __init__(self):
-      self._lexer     = lex.lex()
-      self._lexer.line_start = 0  # posição absoluta do início da primeira linha
-      self._buffer    = deque()          # fila de tokens virtuais a emitir
-      self._pilha     = [0]              # pilha de indentação
-      self._estado    = ESTADO_NORMAL    # estado inicial da FSM
-      self._last_type = None             # tipo do último token retornado (evita VSEP duplicado)
+      self._lexer = lex.lex()
+      self._lexer.line_start = 0      # posição absoluta do início da primeira linha
+      self._buffer = deque()          # fila de tokens virtuais a emitir
+      self._pilha = [0]               # pilha de indentação
+      self._estado = ESTADO_NORMAL    # estado inicial da FSM
+      self._last_type = 'VSEP'        # inicia como VSEP para suprimir separador espúrio no início do arquivo            # tipo do último token retornado (evita VSEP duplicado)
 
    def input(self, data):
       self._lexer.input(data)
 
    # Criação de um token virtual
    def _token_virtual(self, tipo, valor, lineno):
-      tok        = lex.LexToken()
-      tok.type   = tipo
-      tok.value  = valor
+      tok = lex.LexToken()
+      tok.type = tipo
+      tok.value = valor
       tok.lineno = lineno
       tok.lexpos = -1
       return tok
@@ -219,7 +219,9 @@ class HaskellLexer:
          while len(self._pilha) > 1 and col < self._pilha[-1]:
             self._pilha.pop()
             self._buffer.append(self._token_virtual('VFECHA', 'fim de bloco', lineno))
-         self._buffer.append(self._token_virtual('VSEP', 'nova declaração no bloco', lineno))
+         # Só emite VSEP se a coluna bate exatamente com o novo topo da pilha
+         if col == self._pilha[-1] and self._last_type != 'VSEP':
+            self._buffer.append(self._token_virtual('VSEP', 'nova declaração no bloco', lineno))
 
       # col > self._pilha[-1]: continuação de linha → nenhum token emitido
 
@@ -230,9 +232,9 @@ class HaskellLexer:
          self._buffer.append(self._token_virtual('VFECHA', 'fim de bloco', lineno))
 
    # Interface pública usada pelo parser PLY:
-   #   parser = yacc.yacc()
-   #   lexer  = HaskellLexer()
-   #   parser.parse(input, lexer=lexer)
+   # parser = yacc.yacc()
+   # lexer  = HaskellLexer()
+   # parser.parse(input, lexer=lexer)
    def token(self):
       while True:
          # 1. Drena o buffer de tokens virtuais primeiro
@@ -254,20 +256,20 @@ class HaskellLexer:
             return None
 
          # 4. NOVA_LINHA: processa indentação via FSM + pilha
-         #    e NÃO repassa o token ao parser
+         # e NÃO repassa o token ao parser
          if tok.type == 'NOVA_LINHA':
             self._processar_newline(tok.value, tok.lineno)
             continue   # volta ao topo do loop para verificar o buffer
 
          # 5. Bloco inline: keyword e primeiro token na mesma linha (sem NOVA_LINHA entre eles)
-         #    Ex: "let x = 42", "where f = 1" — abre VABRE usando a coluna do token atual
+         # Ex: "let x = 42", "where f = 1" — abre VABRE usando a coluna do token atual
          if self._estado == ESTADO_BLOCO_PENDENTE:
             col = tok.lexpos - self._lexer.line_start
             self._estado = ESTADO_NORMAL
             self._pilha.append(col)
             self._buffer.append(self._token_virtual('VABRE', 'início de bloco', tok.lineno))
             self._buffer.append(tok)
-            continue   # drena o buffer: VABRE primeiro, depois o token real
+            continue # drena o buffer: VABRE primeiro, depois o token real
 
          # 6. Transição de estado: palavra-chave que abre bloco
          if tok.type in BLOCK_OPENERS:
@@ -279,7 +281,7 @@ class HaskellLexer:
 
 # MAIN
 def main():
-   f     = open("input1.hs", "r")
+   f = open("input1.hs", "r")
    lexer = HaskellLexer()
    lexer.input(f.read())
    print('\n\n# lexer output:')

@@ -1,9 +1,10 @@
+-- Comentário na primeira linha
 data Forma = Circulo Int
            | Retangulo Int Int
 
 area :: Forma -> Int
 area f = case f of
-    Circulo r     -> r * r
+    Circulo r  -> r * r
     Retangulo l a -> l * a
 
 classificar :: Int -> String

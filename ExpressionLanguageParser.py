@@ -220,6 +220,10 @@ def p_pattern_upper(p):
     '''pattern : ID_MAI'''
     p[0] = sa.ConPat(p[1])
 
+def p_pattern_upper_args(p):
+    '''pattern : ID_MAI simplepats'''
+    p[0] = sa.ConstructorArgs(p[1], p[2])
+
 def p_pattern_int(p):
     '''pattern : INT'''
     p[0] = sa.IntPat(p[1])
@@ -420,9 +424,6 @@ def p_atom_string(p):
     p[0] = sa.StringExp(p[1])
 
 
-def p_atom_return(p):
-    '''atom : RETURN'''
-    p[0] = sa.VarExp('return')
 def p_atom_paren(p):
     '''atom : LPAREN expr RPAREN'''
     p[0] = p[2]
@@ -495,6 +496,10 @@ def p_dostmt_let(p):
     '''dostmt : LET VABRE localdecls VFECHA'''
     p[0] = sa.LetDoStmt(p[3])
 
+def p_dostmt_return(p):
+    '''dostmt : RETURN atom'''
+    p[0] = sa.ExprDoStmt(sa.AppExp(sa.VarExp('return'), p[2]))
+
 def p_dostmt_expr(p):
     '''dostmt : expr'''
     p[0] = sa.ExprDoStmt(p[1])
@@ -541,7 +546,7 @@ def main():
     f.close()
     lexer  = HaskellLexer()
     parser = yacc.yacc()
-    result = parser.parse(data, lexer=lexer)
+    result = parser.parse('\n' + data, lexer=lexer)
     print("Parse concluído:", result)
 
 if __name__ == "__main__":
