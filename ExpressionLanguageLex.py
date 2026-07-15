@@ -49,9 +49,7 @@ tokens = [
    'VABRE', 'VFECHA', 'VSEP',
 ] + list(reservadas.values())
 
-# OPERADORES E DELIMITADORES (regras de string)
-# O PLY ordena automaticamente por tamanho do padrão (maior primeiro),
-# garantindo que '==' seja reconhecido antes de '=', '::' antes de ':', etc.
+# OPERADORES E DELIMITADORES 
 t_CONCATENA = r'\+\+'
 t_SOMA = r'\+'
 t_SETA = r'->'
@@ -112,12 +110,12 @@ def t_INT(t):
 
 def t_CARACTERE(t):
    r"'(\\.|[^\\'])'"
-   t.value = t.value[1:-1]   # remove as aspas simples
+   t.value = t.value[1:-1]
    return t
 
 def t_STRING(t):
    r'"(\\.|[^\\"])*"'
-   t.value = t.value[1:-1]   # remove as aspas duplas
+   t.value = t.value[1:-1]
    return t
 
 # COMENTÁRIOS (descartados, não viram tokens)
@@ -279,7 +277,6 @@ class HaskellLexer:
          return tok
 
 
-# MAIN
 def main():
    f = open("input1.hs", "r")
    lexer = HaskellLexer()

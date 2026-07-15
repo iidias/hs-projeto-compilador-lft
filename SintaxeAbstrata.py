@@ -61,21 +61,26 @@ class TypeExpr(metaclass=ABCMeta):
 
 class SimpleType(TypeExpr):
     def __init__(self, name): self.name = name
+    def __str__(self): return self.name
     def accept(self, visitor): return visitor.visitSimpleType(self)
 
 class ArrowType(TypeExpr):
     def __init__(self, left, right): self.left = left; self.right = right
+    def __str__(self): return str(self.left) + ' -> ' + str(self.right)
     def accept(self, visitor): return visitor.visitArrowType(self)
 
 class ListType(TypeExpr):
     def __init__(self, elem): self.elem = elem
+    def __str__(self): return '[' + str(self.elem) + ']'
     def accept(self, visitor): return visitor.visitListType(self)
 
 class TupleType(TypeExpr):
     def __init__(self, types): self.types = types
+    def __str__(self): return '(' + ', '.join(str(t) for t in self.types) + ')'
     def accept(self, visitor): return visitor.visitTupleType(self)
 
 class UnitType(TypeExpr):
+    def __str__(self): return '()'
     def accept(self, visitor): return visitor.visitUnitType(self)
 
 class Ctor(metaclass=ABCMeta):
