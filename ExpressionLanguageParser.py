@@ -4,6 +4,7 @@ import SintaxeAbstrata as sa
 
 # PRECEDÊNCIA (menor para maior)
 precedence = (
+    ('right', 'LAMBDA_PREC'),
     ('right', 'DOLAR'),
     ('right', 'OU_LOG'),
     ('right', 'E_LOG'),
@@ -450,7 +451,7 @@ def p_atom_range(p):
 
 # IF-THEN-ELSE
 def p_ifexpr(p):
-    '''ifexpr : IF expr THEN expr ELSE expr'''
+    '''ifexpr : IF expr THEN expr ELSE expr %prec LAMBDA_PREC'''
     p[0] = sa.IfExp(p[2], p[4], p[6])
 
 # CASE-OF
@@ -472,7 +473,7 @@ def p_casealt(p):
 
 # LET-IN
 def p_letexpr(p):
-    '''letexpr : LET VABRE localdecls VFECHA IN expr'''
+    '''letexpr : LET VABRE localdecls VFECHA IN expr %prec LAMBDA_PREC'''
     p[0] = sa.LetExp(p[3], p[6])
 
 # DO
@@ -506,7 +507,7 @@ def p_dostmt_expr(p):
 
 # LAMBDA
 def p_lambdaexpr(p):
-    '''lambdaexpr : LAMBDA simplepats SETA expr'''
+    '''lambdaexpr : LAMBDA simplepats SETA expr %prec LAMBDA_PREC'''
     p[0] = sa.LambdaExp(p[2], p[4])
 
 # LISTAS AUXILIARES
