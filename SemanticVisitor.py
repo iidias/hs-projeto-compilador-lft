@@ -46,17 +46,66 @@ class SemanticVisitor(AbstractVisitor):
         # Registra a assinatura de tipo no escopo global
         st.addFunction(typeSig.name, [], str(typeSig.type_expr))
 
-    """
+    
     def visitFuncDecl(self, funcDecl):
+        if self.em_escopo_local:
+            st.addVar(funcDecl.name, st.UNKNOWN)
+            for i in funcDecl.pats:
+                i.accept(self)
+            funcDecl.body.accept(self)
+        else:
+            if st.getBindable(funcDecl.name) is None:
+                st.addFunction(funcDecl.name, [], st.UNKNOWN)
+            st.beginScope(funcDecl.name)
+            for i in funcDecl.pats:
+                i.accept(self)
+            funcDecl.body.accept(self)
+            st.endScope()   
        
 
     def visitFuncDeclWhere(self, funcDeclWhere):
+        if self.em_escopo_local:
+            st.addVar(funcDeclWhere.name, st.UNKNOWN)
+            for i in funcDeclWhere.pats:
+                i.accept(self)
+            anterior = self.em_escopo_local
+            self.em_escopo_local = True
+            funcDeclWhere.where_decls.accept(self)
+            self.em_escopo_local = anterior
+            funcDeclWhere.body.accept(self)
+        else:
+            if st.getBindable(funcDeclWhere.name) is None:
+                st.addFunction(funcDeclWhere.name, [], st.UNKNOWN)
+            st.beginScope(funcDeclWhere.name)
+            for i in funcDeclWhere.pats:
+                i.accept(self)
+        anterior = self.em_escopo_local
+        self.em_escopo_local = True
+        funcDeclWhere.where_decls.accept(self)
+        self.em_escopo_local = anterior
+        funcDeclWhere.body.accept(self)
+        st.endScope()
         
 
     def visitFuncDeclGuards(self, funcDeclGuards):
+        if self.em_escopo_local:
+            st.addVar(funcDeclGuards.name, st.UNKNOWN)
+            for i in funcDeclGuards.pats:
+                i.accept(self)
+            funcDeclGuards.guards.accept(self)
+        else:
+            if st.getBindable(funcDeclGuards.name) is None:
+                st.addFunction(funcDeclGuards.name, [], st.UNKNOWN)
+            st.beginScope(funcDeclGuards.name)
+            for i in funcDeclGuards.pats:
+                i.accept(self)
+            funcDeclGuards.guards.accept(self)
+            st.endScope()
         
 
-    def visitDataDecl(self, dataDecl):"""
+    def visitDataDecl(self, dataDecl):
+        for i in dataDecl.constructors:
+            i.accept(self)
         
 
     # TIPOS
