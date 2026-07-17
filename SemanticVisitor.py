@@ -140,12 +140,19 @@ class SemanticVisitor(AbstractVisitor):
 
     # GUARDAS
 
-    """
     def visitGuard(self, guard):
-        
-    def visitSingleGuards(self, singleGuards):
+        tipoCond = guard.cond.accept(self)
+        if tipoCond not in [st.BOOL, st.UNKNOWN]:
+            self.n_errors += 1
+            print('\t[Erro] Condicao da guarda deve ser booleana. Encontrado:', tipoCond)
+        guard.body.accept(self)
 
-    def visitCompoundGuards(self, compoundGuards):"""
+    def visitSingleGuards(self, singleGuards):
+        singleGuards.guard.accept(self)
+
+    def visitCompoundGuards(self, compoundGuards):
+        compoundGuards.guards.accept(self)
+        compoundGuards.guard.accept(self)
 
     # DECLARAÇÕES LOCAIS
 
@@ -189,21 +196,63 @@ class SemanticVisitor(AbstractVisitor):
         appExp.arg.accept(self)
         return st.UNKNOWN
 
-    """
     def visitInfixExp(self, infixExp):
+        tipoEsq = infixExp.left.accept(self)
+        tipoDir = infixExp.right.accept(self)
+        if infixExp.op in ['==', '/=', '<', '<=', '>', '>=', '&&', '||']:
+            return st.BOOL
+        elif infixExp.op in ['+', '-', '*', '/', 'div', 'mod']:
+            return st.INT
+        return st.UNKNOWN
 
     def visitNegExp(self, negExp):
+        tipo = negExp.expr.accept(self)
+        if tipo not in [st.INT, st.UNKNOWN]:
+            self.n_errors += 1
+            print('\t[Erro] Expressao negada deve ser numerica. Encontrado:', tipo)
+        return st.INT
 
     def visitNotExp(self, notExp):
+        tipo = notExp.expr.accept(self)
+        if tipo not in [st.BOOL, st.UNKNOWN]:
+            self.n_errors += 1
+            print('\t[Erro] Expressao do NOT deve ser booleana. Encontrado:', tipo)
+        return st.BOOL
 
     def visitIfExp(self, ifExp):
+        tipoCond = ifExp.cond.accept(self)
+        if tipoCond not in [st.BOOL, st.UNKNOWN]:
+            self.n_errors += 1
+            print('\t[Erro] Condicao do IF deve ser booleana. Encontrado:', tipoCond)
+        tipoThen = ifExp.then_e.accept(self)
+        tipoElse = ifExp.else_e.accept(self)
+        tipoResult = compativel(tipoThen, tipoElse)
+        if tipoResult is None:
+            self.n_errors += 1
+            print('\t[Erro] Tipos das ramificacoes THEN e ELSE sao incompativeis no IF.')
+            return st.UNKNOWN
+        return tipoResult
 
     def visitCaseExp(self, caseExp):
+        caseExp.expr.accept(self)
+        caseExp.alts.accept(self)
+        return st.UNKNOWN
 
     def visitLetExp(self, letExp):
-    
+        st.beginScope('let')
+        anterior = self.em_escopo_local
+        self.em_escopo_local = True
+        letExp.decls.accept(self)
+        self.em_escopo_local = anterior
+        tipoResult = letExp.body.accept(self)
+        st.endScope()
+        return tipoResult
 
-    def visitDoExp(self, doExp):"""
+    def visitDoExp(self, doExp):
+        st.beginScope('do')
+        doExp.stmts.accept(self)
+        st.endScope()
+        return st.UNKNOWN
         
     def visitLambdaExp(self, lambdaExp):
         st.beginScope('lambda')
