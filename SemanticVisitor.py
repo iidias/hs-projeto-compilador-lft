@@ -363,6 +363,20 @@ class SemanticVisitor(AbstractVisitor):
     def visitEmptyListPat(self, emptyListPat):
         return st.UNKNOWN
 
+    def pre_registrar(self, node):
+        """Primeira passagem: percorre a AST registrando apenas os nomes
+        de funcoes no escopo global. Permite recursao mutua e uso de funcoes
+        definidas apos o ponto de chamada (dupla passagem)."""
+        import SintaxeAbstrata as sa
+        if isinstance(node, sa.SingleDecl):
+            self.pre_registrar(node.decl)
+        elif isinstance(node, sa.CompoundDecl):
+            self.pre_registrar(node.decl)
+            self.pre_registrar(node.program)
+        elif isinstance(node, (sa.FuncDecl, sa.FuncDeclWhere, sa.FuncDeclGuards)):
+            if st.getBindable(node.name) is None:
+                st.addVar(node.name, st.UNKNOWN)
+
     def getnerros(self):
         return self.n_errors
 
@@ -376,6 +390,7 @@ def main():
     result = parser.parse('\n' + data, lexer=lexer)
     print("# verificacao semantica do programa de entrada\n")
     svisitor = SemanticVisitor()
+    svisitor.pre_registrar(result)
     result.accept(svisitor)
     print(f"\nForam encontrados {svisitor.getnerros()} erro(s) semantico(s)")
 
