@@ -2,7 +2,7 @@
 
 ---
 
-## 📋 Sobre o Projeto
+## Sobre o Projeto
 
 Este repositório contém a implementação de um **mini-compilador** para um subconjunto da linguagem **Haskell**, cobrindo todas as etapas clássicas do processo de compilação: análise léxica, análise sintática, construção da árvore sintática abstrata, análise semântica e geração de código.
 
@@ -10,7 +10,7 @@ Haskell é uma linguagem puramente funcional, de tipagem estática e forte, com 
 
 ---
 
-## 🔤 O Subconjunto da Linguagem
+## O Subconjunto da Linguagem
 
 O compilador cobre um subconjunto expressivo de Haskell, incluindo:
 
@@ -25,32 +25,7 @@ O compilador cobre um subconjunto expressivo de Haskell, incluindo:
 
 ---
 
-## 🛠️ Tecnologias
-
-| Ferramenta | Uso |
-|:----------:|:----|
-| Python 3   | Linguagem de implementação do compilador |
-| PLY (Python Lex-Yacc) | Geração do analisador léxico e sintático |
-
----
-
-## ⚙️ Como Executar
-
-### Pré-requisitos
-
-```bash
-pip install -r requirements.txt
-```
-
-### Executando o compilador
-
-```bash
-python src/main.py <arquivo.hs>
-```
-
----
-
-## 👥 Equipe
+## Equipe
 
 * Guilhereme Seixas ([@guilheeme1108-prog](https://github.com/guilheeme1108-prog/))
 * Igor Dias ([@iidias](https://github.com/iidias/))
@@ -59,6 +34,6 @@ python src/main.py <arquivo.hs>
   
 ---
 
-## 📄 Licença
+## Licença
 
 Este projeto é de uso acadêmico.
