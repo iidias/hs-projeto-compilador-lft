@@ -4,9 +4,11 @@ SCOPE = 'escopo'
 SCOPE_MAIN = 'main'
 OFFSET = 'offset'
 SP = 'sp'
+# Se DEBUG = -1, imprime a tabela apos cada mudanca
+DEBUG = 0
 
-def printTable(debug=False):
-    if debug:
+def printTable():
+    if DEBUG == -1:
         print('AssemblyST:', symbolTable)
 
 def beginScope(nameScope):
@@ -45,3 +47,63 @@ def addSP(value):
 
 def getSP():
     return symbolTable[-1][SP]
+
+def main():
+    global DEBUG
+    DEBUG = -1
+
+    print('\n# Criando escopo main')
+    beginScope(SCOPE_MAIN)
+
+    print('\n# Adicionando local x (offset automatico)')
+    addVar('x')
+
+    print('\n# Adicionando local y (offset automatico)')
+    addVar('y')
+
+    print('\n# Criando escopo da funcao soma')
+    beginScope('soma')
+
+    print('\n# Adicionando parametros a e b (offsets explicitos, positivos)')
+    addVar('a', 12)
+    addVar('b', 8)
+
+    print('\n# Adicionando local dobro dentro de soma')
+    addVar('dobro')
+
+    print('\n# Consultando offset de a (parametro)')
+    print(getOffset('a'))
+
+    print('\n# Consultando offset de dobro (local)')
+    print(getOffset('dobro'))
+
+    print('\n# Consultando offset de nome inexistente')
+    print(getOffset('naoexiste'))
+
+    print('\n# SP de soma antes do escopo aninhado')
+    print(getSP())
+
+    print('\n# Criando escopo aninhado (let dentro de soma)')
+    beginNestedScope('let')
+
+    print('\n# Adicionando local soma_parcial dentro do let')
+    addVar('soma_parcial')
+
+    print('\n# x do escopo main ainda visivel de dentro do let')
+    print(getOffset('x'))
+
+    print('\n# Sombreamento: novo x local ao let')
+    addVar('x')
+    print(getOffset('x'))
+
+    print('\n# Removendo escopo let')
+    endScope()
+
+    print('\n# Apos endScope, x volta a ser o do escopo main')
+    print(getOffset('x'))
+
+    print('\n# Removendo escopo soma')
+    endScope()
+
+if __name__ == "__main__":
+    main()

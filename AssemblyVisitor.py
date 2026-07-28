@@ -10,14 +10,13 @@ from ExpressionLanguageLex import HaskellLexer
 # aborta o programa em vez de emitir uma mensagem de erro
 ERRO_PADRAO_LABEL = "__erro_padrao_nao_exaustivo__"
 
-
 class AssemblyVisitor(AbstractVisitor):
 
     def __init__(self):
         st.beginScope(st.SCOPE_MAIN)
-        self.text = []          # código do main (fica solto no .text)
+        self.text = [] # código do main (fica solto no .text)
         self.text.append(".text")
-        self.text.append("main:")   # ponto de entrada exigido pelo spim/MARS
+        self.text.append("main:") # ponto de entrada exigido pelo spim/MARS
         self.text.append("    move $fp, $sp")
         self.funcs = [] # código de todas as outras funções
         self.data = [] # constantes .data (só strings, por enquanto)
@@ -49,7 +48,6 @@ class AssemblyVisitor(AbstractVisitor):
     def visitCompoundDecl(self, compoundDecl):
         compoundDecl.decl.accept(self)  # processa a cadeia anterior
         self._decls.append(compoundDecl.program)  # anexa a declaração nova
-
 
     def visitTypeSig(self, typeSig):
         pass  # sem efeito em Assembly; só interessava ao semântico
@@ -482,7 +480,7 @@ class AssemblyVisitor(AbstractVisitor):
         self.funcs.append("    sw $fp, 0($sp)")
         self.funcs.append("    move $fp, $sp")
         idx_placeholder = len(self.funcs)
-        self.funcs.append(None)  # retrocesso (backpatch) mais abaixo
+        self.funcs.append(None)  # retrocesso mais abaixo
         self._menor_sp = 0
 
         for i, eq in enumerate(equacoes):
@@ -510,7 +508,6 @@ class AssemblyVisitor(AbstractVisitor):
         self.text[idx_placeholder] = f"    addi $sp, $sp, {self._menor_sp}"
 
     # Driver principal
-
     def generate(self, ast):
         ast.accept(self)  # popula self._decls, na ordem do arquivo
 
