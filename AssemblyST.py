@@ -41,12 +41,7 @@ def getOffset(name):
     return None
 
 def addSP(value):
-    """Ajusta manualmente o contador SP do escopo atual (usado só em casos
-    especiais; a maior parte do código usa addVar, que já ajusta sozinho)."""
     symbolTable[-1][SP] += value
 
-
 def getSP():
-    """SP (negativo) acumulado no escopo atual — usado para saber quantos
-    bytes de locais essa função/escopo já reservou até agora."""
     return symbolTable[-1][SP]
