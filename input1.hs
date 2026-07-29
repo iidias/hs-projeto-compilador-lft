@@ -40,7 +40,7 @@ calc a b =
 -- função recursiva
 fatorial :: Int -> Int
 fatorial 0 = 1
-fatorial n = n * fatorial n
+fatorial n = n * fatorial (n - 1)
 
 -- do com let agrupado e return
 main :: IO ()
