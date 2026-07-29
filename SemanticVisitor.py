@@ -65,6 +65,9 @@ class SemanticVisitor(AbstractVisitor):
 
     def visitFuncDeclWhere(self, funcDeclWhere):
         if self.em_escopo_local:
+            # Declaracao aninhada dentro de outro where/let: o nome entra no
+            # escopo corrente e NENHUM escopo novo e aberto, logo tambem nao
+            # pode haver endScope() ao final.
             st.addVar(funcDeclWhere.name, st.UNKNOWN)
             for i in funcDeclWhere.pats:
                 i.accept(self)
@@ -74,18 +77,20 @@ class SemanticVisitor(AbstractVisitor):
             self.em_escopo_local = anterior
             funcDeclWhere.body.accept(self)
         else:
+            # Declaracao de alto nivel: abre escopo proprio e o fecha ao final.
             if st.getBindable(funcDeclWhere.name) is None:
                 st.addFunction(funcDeclWhere.name, [], st.UNKNOWN)
             st.beginScope(funcDeclWhere.name)
             for i in funcDeclWhere.pats:
                 i.accept(self)
-        anterior = self.em_escopo_local
-        self.em_escopo_local = True
-        funcDeclWhere.where_decls.accept(self)
-        self.em_escopo_local = anterior
-        funcDeclWhere.body.accept(self)
-        st.endScope()
-        
+            anterior = self.em_escopo_local
+            self.em_escopo_local = True
+            funcDeclWhere.where_decls.accept(self)
+            self.em_escopo_local = anterior
+            funcDeclWhere.body.accept(self)
+            st.endScope()
+
+
 
     def visitFuncDeclGuards(self, funcDeclGuards):
         if self.em_escopo_local:
@@ -196,13 +201,57 @@ class SemanticVisitor(AbstractVisitor):
         appExp.arg.accept(self)
         return st.UNKNOWN
 
+    # Operadores agrupados por exigencia de tipo dos operandos
+    OPS_ARITMETICOS  = ['+', '-', '*', '/', '^', 'div', 'mod']
+    OPS_LOGICOS      = ['&&', '||']
+    OPS_RELACIONAIS  = ['==', '/=', '<', '<=', '>', '>=']
+
+    def _exigir(self, tipo, esperado, op, lado):
+        """Reporta erro se 'tipo' nao for 'esperado' nem desconhecido."""
+        if tipo in [esperado, st.UNKNOWN]:
+            return True
+        self.n_errors += 1
+        print('\t[Erro] Operando ' + lado + ' de "' + op + '" deve ser '
+              + esperado + '. Encontrado:', tipo)
+        return False
+
     def visitInfixExp(self, infixExp):
+        op = infixExp.op
         tipoEsq = infixExp.left.accept(self)
         tipoDir = infixExp.right.accept(self)
-        if infixExp.op in ['==', '/=', '<', '<=', '>', '>=', '&&', '||']:
-            return st.BOOL
-        elif infixExp.op in ['+', '-', '*', '/', 'div', 'mod']:
+
+        if op in self.OPS_ARITMETICOS:
+            self._exigir(tipoEsq, st.INT, op, 'esquerdo')
+            self._exigir(tipoDir, st.INT, op, 'direito')
             return st.INT
+
+        if op in self.OPS_LOGICOS:
+            self._exigir(tipoEsq, st.BOOL, op, 'esquerdo')
+            self._exigir(tipoDir, st.BOOL, op, 'direito')
+            return st.BOOL
+
+        if op in self.OPS_RELACIONAIS:
+            # Nao exige um tipo fixo: exige que os dois lados sejam comparaveis
+            if compativel(tipoEsq, tipoDir) is None:
+                self.n_errors += 1
+                print('\t[Erro] Comparacao invalida com "' + op + '": lado '
+                      'esquerdo eh do tipo', tipoEsq, 'e o direito eh do tipo',
+                      tipoDir)
+            return st.BOOL
+
+        if op == '++':
+            # So consegue checar quando os dois lados tem tipo conhecido;
+            # listas literais devolvem 'desconhecido' e passam sem erro.
+            tipoResult = compativel(tipoEsq, tipoDir)
+            if tipoResult is None:
+                self.n_errors += 1
+                print('\t[Erro] Concatenacao invalida: lado esquerdo eh do tipo',
+                      tipoEsq, 'e o direito eh do tipo', tipoDir)
+                return st.UNKNOWN
+            return tipoResult
+
+        # ':' (cons), '.' (composicao) e '$' (aplicacao) nao sao verificados:
+        # exigiriam tipos de lista e de funcao, fora do escopo deste subconjunto.
         return st.UNKNOWN
 
     def visitNegExp(self, negExp):
@@ -364,9 +413,6 @@ class SemanticVisitor(AbstractVisitor):
         return st.UNKNOWN
 
     def pre_registrar(self, node):
-        """Primeira passagem: percorre a AST registrando apenas os nomes
-        de funcoes no escopo global. Permite recursao mutua e uso de funcoes
-        definidas apos o ponto de chamada (dupla passagem)."""
         import SintaxeAbstrata as sa
         if isinstance(node, sa.SingleDecl):
             self.pre_registrar(node.decl)
